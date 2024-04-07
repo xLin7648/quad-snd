@@ -7,6 +7,7 @@ use std::sync::mpsc;
 
 enum AudioMessage {
     AddSound(u32, Vec<f32>),
+    SetTime(u32, f32),
     Play(u32, u32, bool, f32),
     Stop(u32),
     StopAll(u32),
@@ -40,6 +41,11 @@ impl SoundState {
     fn rewind(&mut self) {
         self.sample = 0;
     }
+
+    fn set_time(&mut self, time: f32) {
+        //                44100(SAMPLE_RATE) 2(CHANNELS)
+        self.sample = (time * 44100.) as usize * 2;
+    }
 }
 
 pub struct Mixer {
@@ -70,6 +76,11 @@ impl Playback {
     pub fn set_volume(&self, ctx: &AudioContext, volume: f32) {
         ctx.mixer_ctrl
             .send(AudioMessage::SetVolume(self.play_id, volume));
+    }
+
+    pub fn set_time(&self, ctx: &AudioContext, time: f32) {
+        ctx.mixer_ctrl
+            .send(AudioMessage::SetTime(self.play_id, time));
     }
 }
 
@@ -154,6 +165,12 @@ impl Mixer {
             match message {
                 AudioMessage::AddSound(id, data) => {
                     self.sounds.insert(id, data.into());
+                }
+                AudioMessage::SetTime(play_id, time) => {
+                    if let Some(sound) = self.mixer_state.iter_mut().find(|s| s.play_id == play_id)
+                    {
+                        sound.set_time(time);
+                    }
                 }
                 AudioMessage::Play(sound_id, play_id, looped, volume) => {
                     if let Some(data) = self.sounds.get(&sound_id) {
