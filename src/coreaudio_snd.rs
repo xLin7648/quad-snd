@@ -121,6 +121,10 @@ impl Sound {
         ctx.mixer_ctrl.set_volume_all(self.sound_id, volume);
     }
 
+    pub fn set_time(&self, ctx: &AudioContext, time: f32) {
+        ctx.mixer_ctrl.set_volume_all(self.sound_id, time);
+    }
+
     pub fn delete(&self, ctx: &AudioContext) {
         ctx.mixer_ctrl.delete(self.sound_id);
     }

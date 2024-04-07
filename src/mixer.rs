@@ -8,6 +8,7 @@ use std::sync::mpsc;
 enum AudioMessage {
     AddSound(u32, Vec<f32>),
     SetTime(u32, f32),
+    SetTimeAll(u32, f32),
     Play(u32, u32, bool, f32),
     Stop(u32),
     StopAll(u32),
@@ -42,7 +43,7 @@ impl SoundState {
         self.sample = 0;
     }
 
-    fn set_time(&mut self, time: f32) {
+    pub fn set_time(&mut self, time: f32) {
         //                44100(SAMPLE_RATE) 2(CHANNELS)
         self.sample = (time * 44100.) as usize * 2;
     }
@@ -121,6 +122,10 @@ impl MixerControl {
         self.send(AudioMessage::StopAll(sound_id));
     }
 
+    pub fn set_time_all(&self, sound_id: u32, time: f32) {
+        self.send(AudioMessage::SetTimeAll(sound_id, time));
+    }
+
     pub fn set_volume_all(&self, sound_id: u32, volume: f32) {
         self.send(AudioMessage::SetVolumeAll(sound_id, volume));
     }
@@ -166,12 +171,6 @@ impl Mixer {
                 AudioMessage::AddSound(id, data) => {
                     self.sounds.insert(id, data.into());
                 }
-                AudioMessage::SetTime(play_id, time) => {
-                    if let Some(sound) = self.mixer_state.iter_mut().find(|s| s.play_id == play_id)
-                    {
-                        sound.set_time(time);
-                    }
-                }
                 AudioMessage::Play(sound_id, play_id, looped, volume) => {
                     if let Some(data) = self.sounds.get(&sound_id) {
                         self.mixer_state.push(SoundState {
@@ -194,6 +193,20 @@ impl Mixer {
                         if self.mixer_state[i].sound_id == sound_id {
                             self.mixer_state.swap_remove(i);
                         }
+                    }
+                }
+                AudioMessage::SetTime(play_id, time) => {
+                    if let Some(sound) = self.mixer_state.iter_mut().find(|s| s.play_id == play_id) {
+                        sound.set_time(time);
+                    }
+                }
+                AudioMessage::SetTimeAll(sound_id, time) => {
+                    for sound in self
+                        .mixer_state
+                        .iter_mut()
+                        .filter(|s| s.sound_id == sound_id)
+                    {
+                        sound.set_time(time);
                     }
                 }
                 AudioMessage::SetVolume(play_id, volume) => {
