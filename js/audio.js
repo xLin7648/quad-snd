@@ -1,3 +1,5 @@
+// 并未实测设置时间的功能是否正常
+
 "use strict";
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -151,6 +153,14 @@ function audio_source_set_volume(sound_key, volume) {
     });
 }
 
+function audio_source_set_time(sound_key, time) {
+    playbacks.forEach(playback => {
+        if (playback.sound_key === sound_key) {
+            playback.source.start(0, time);
+        }
+    });
+}
+
 function audio_source_stop(sound_key) {
     playbacks.forEach(playback => {
         playback.sound_key === sound_key && stop(playback);
@@ -177,16 +187,26 @@ function audio_playback_set_volume(playback_key, volume) {
     }
 }
 
+function audio_playback_set_time(playback_key, time) {
+    let playback = playbacks.find(playback => playback.playback_key === playback_key);
+
+    if (playback != null) {
+        playback.source.start(0, time);
+    }
+}
+
 function register_plugin(importObject) {
     importObject.env.audio_init = audio_init;
     importObject.env.audio_add_buffer = audio_add_buffer;
     importObject.env.audio_play_buffer = audio_play_buffer;
     importObject.env.audio_source_is_loaded = audio_source_is_loaded;
     importObject.env.audio_source_set_volume = audio_source_set_volume;
+    importObject.env.audio_source_set_time = audio_source_set_time;
     importObject.env.audio_source_stop = audio_source_stop;
     importObject.env.audio_source_delete = audio_source_delete;
     importObject.env.audio_playback_stop = audio_playback_stop;
     importObject.env.audio_playback_set_volume = audio_playback_set_volume;
+    importObject.env.audio_playback_set_time = audio_playback_set_time;
 }
 
 miniquad_add_plugin({ register_plugin, version: "0.1.0", name: "macroquad_audio" });

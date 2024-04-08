@@ -6,10 +6,12 @@ extern "C" {
     fn audio_play_buffer(buffer: u32, volume: f32, repeat: bool) -> u32;
     fn audio_source_is_loaded(buffer: u32) -> bool;
     fn audio_source_set_volume(buffer: u32, volume: f32);
+    fn audio_source_set_time(buffer: u32, time: f32);
     fn audio_source_stop(buffer: u32);
     fn audio_source_delete(buffer: u32);
     fn audio_playback_stop(playback: u32);
     fn audio_playback_set_volume(playback: u32, volume: f32);
+    fn audio_playback_set_time(playback: u32, time: f32);
 }
 
 #[no_mangle]
@@ -45,6 +47,10 @@ impl Playback {
     pub fn set_volume(&self, _ctx: &AudioContext, volume: f32) {
         unsafe { audio_playback_set_volume(self.0, volume) }
     }
+
+    pub fn set_time(&self, _ctx: &AudioContext, time: f32) {
+        unsafe { audio_playback_set_time(self.0, time) }
+    }
 }
 
 impl Sound {
@@ -78,6 +84,10 @@ impl Sound {
 
     pub fn set_volume(&self, _ctx: &AudioContext, volume: f32) {
         unsafe { audio_source_set_volume(self.0, volume) }
+    }
+
+    pub fn set_time(&self, _ctx: &AudioContext, time: f32) {
+        unsafe { audio_source_set_time(self.0, time) }
     }
 
     pub fn delete(&self, _ctx: &AudioContext) {
